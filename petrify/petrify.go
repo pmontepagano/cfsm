@@ -7,7 +7,7 @@ import "strings"
 const Tmpl = `
 -- Machines #{{ .ID }}
 -- {{ multiline .Comment }}
-.outputs
+.outputs {{ .Name }}
 .state graph
 {{ range .Edges -}}{{ . }}{{- end }}
 {{- if .Start -}}
