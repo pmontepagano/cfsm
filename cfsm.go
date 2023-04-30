@@ -53,12 +53,20 @@ func (s *System) RemoveMachine(id int) {
 	}
 }
 
-func (s *System) String() string {
+func (s *System) bytesBuffer() *bytes.Buffer {
 	var buf bytes.Buffer
 	for _, cfsm := range s.CFSMs {
 		buf.WriteString(cfsm.String())
 	}
-	return buf.String()
+	return &buf
+}
+
+func (s *System) String() string {
+	return s.bytesBuffer().String()
+}
+
+func (s *System) Bytes() []byte {
+	return s.bytesBuffer().Bytes()
 }
 
 // CFSM is a single Communicating Finite State Machine.
@@ -103,7 +111,7 @@ func (m *CFSM) IsEmpty() bool {
 	return len(m.states) == 0 || (len(m.states) == 1 && len(m.states[0].edges) == 0)
 }
 
-func (m *CFSM) String() string {
+func (m *CFSM) bytesBuffer() *bytes.Buffer {
 	var buf bytes.Buffer
 
 	fmap := template.FuncMap{
@@ -131,7 +139,15 @@ func (m *CFSM) String() string {
 		log.Println("Failed to execute template:", err)
 	}
 
-	return buf.String()
+	return &buf
+}
+
+func (m *CFSM) Bytes() []byte {
+	return m.bytesBuffer().Bytes()
+}
+
+func (m *CFSM) String() string {
+	return m.bytesBuffer().String()
 }
 
 // State is a state.
