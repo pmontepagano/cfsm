@@ -1,6 +1,6 @@
-# cfsm [![Build Status](https://travis-ci.org/nickng/cfsm.svg?branch=master)](https://travis-ci.org/nickng/cfsm) [![GoDoc](https://godoc.org/github.com/nickng/cfsm?status.svg)](http://godoc.org/github.com/nickng/cfsm)
+## `pmontepagano/cfsm` is a CFSMs library in Go.
 
-## `nickng/cfsm` is a CFSMs library in Go.
+This library was forked from [`nickng/cfsm`](https://github.com/nickng/cfsm).
 
 Communicating Finite State Machines (CFSMs) or Communicating Automata are
 formalisims for modelling concurrent processes by Brand and Zafiropulo (1983).

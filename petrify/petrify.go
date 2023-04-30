@@ -1,14 +1,13 @@
 // Package petrify contains encoding for ordinary string into petrify-accepted
 // format. The encoding is incomplete.
-//
-package petrify // import "github.com/nickng/cfsm/petrify"
+package petrify // import "github.com/pmontepagano/cfsm/petrify"
 
 import "strings"
 
 const Tmpl = `
 -- Machines #{{ .ID }}
 -- {{ multiline .Comment }}
-.outputs
+.outputs {{ .Name }}
 .state graph
 {{ range .Edges -}}{{ . }}{{- end }}
 {{- if .Start -}}

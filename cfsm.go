@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"text/template"
 
-	"github.com/nickng/cfsm/petrify"
+	"github.com/pmontepagano/cfsm/petrify"
 )
 
 const (
@@ -19,22 +20,46 @@ const (
 // System is a set of CFSMs.
 type System struct {
 	sync.Mutex
-	CFSMs   []*CFSM // Individual CFSMs in the communicating system.
-	Comment string  // Comments on the System.
+	CFSMs     []*CFSM          // Individual CFSMs in the communicating system.
+	cfsmNames map[string]*CFSM // Same CFSMs but ordered by insertion time.
+	Comment   string           // Comments on the System.
 }
 
 // NewSystem returns a new communicating system
 func NewSystem() *System {
-	return &System{CFSMs: make([]*CFSM, 0)}
+	return &System{CFSMs: make([]*CFSM, 0), cfsmNames: make(map[string]*CFSM)}
 }
 
 // NewMachine creates a new CFSM in the communicating system and returns it.
-func (s *System) NewMachine() *CFSM {
+// The ID gets assigned a numeric value.
+func (s *System) NewMachine() (*CFSM, error) {
 	s.Lock()
 	defer s.Unlock()
-	cfsm := &CFSM{ID: len(s.CFSMs)}
+	id := len(s.CFSMs)
+	name := strconv.Itoa(id)
+
+	return s.addNewMachine(id, name)
+}
+
+// NewMachine creates a new CFSM in the communicating system and returns it.
+func (s *System) NewNamedMachine(name string) (*CFSM, error) {
+	s.Lock()
+	defer s.Unlock()
+	id := len(s.CFSMs)
+
+	return s.addNewMachine(id, name)
+}
+
+// Helper function for NewMachine and NewNamedMachine. This function assumes the caller has locked the mutex.
+func (s *System) addNewMachine(id int, name string) (*CFSM, error) {
+	_, ok := s.cfsmNames[name]
+	if ok {
+		return nil, fmt.Errorf("machine with name %s already exists in the System", name)
+	}
+	cfsm := &CFSM{ID: id, Name: name}
+	s.cfsmNames[name] = cfsm
 	s.CFSMs = append(s.CFSMs, cfsm)
-	return cfsm
+	return cfsm, nil
 }
 
 // RemoveMachine removes a CFSM with the given id from System.
@@ -43,22 +68,36 @@ func (s *System) RemoveMachine(id int) {
 	defer s.Unlock()
 	removed := 0
 	for i := range s.CFSMs {
-		if s.CFSMs[i-removed].ID == id {
+		m := s.CFSMs[i-removed]
+		if m.ID == id {
+			delete(s.cfsmNames, m.Name)
 			s.CFSMs = append(s.CFSMs[:i-removed], s.CFSMs[i-removed+1:]...)
 			removed++
 		}
 	}
-	for i := range s.CFSMs {
-		s.CFSMs[i].ID = i
+	for i, m := range s.CFSMs {
+		if intName, err := strconv.Atoi(m.Name); err == nil && intName == m.ID {
+			// The name in this CFSM was set from the ID.
+			m.Name = strconv.Itoa(i)
+		}
+		m.ID = i
 	}
 }
 
-func (s *System) String() string {
+func (s *System) bytesBuffer() *bytes.Buffer {
 	var buf bytes.Buffer
 	for _, cfsm := range s.CFSMs {
 		buf.WriteString(cfsm.String())
 	}
-	return buf.String()
+	return &buf
+}
+
+func (s *System) String() string {
+	return s.bytesBuffer().String()
+}
+
+func (s *System) Bytes() []byte {
+	return s.bytesBuffer().Bytes()
 }
 
 // CFSM is a single Communicating Finite State Machine.
@@ -66,6 +105,7 @@ type CFSM struct {
 	ID      int    // Unique identifier.
 	Start   *State // Starting state of the CFSM.
 	Comment string // Comments on the CFSM.
+	Name    string // Unique name.
 
 	states []*State // States in a CFSM.
 }
@@ -103,7 +143,7 @@ func (m *CFSM) IsEmpty() bool {
 	return len(m.states) == 0 || (len(m.states) == 1 && len(m.states[0].edges) == 0)
 }
 
-func (m *CFSM) String() string {
+func (m *CFSM) bytesBuffer() *bytes.Buffer {
 	var buf bytes.Buffer
 
 	fmap := template.FuncMap{
@@ -112,11 +152,13 @@ func (m *CFSM) String() string {
 	t := template.Must(template.New("petrify").Funcs(fmap).Parse(petrify.Tmpl))
 	mach := struct {
 		ID      int
+		Name    string
 		Start   *State
 		Comment string
 		Edges   []string
 	}{
 		ID:      m.ID,
+		Name:    m.Name,
 		Start:   m.Start,
 		Comment: m.Comment,
 	}
@@ -131,7 +173,15 @@ func (m *CFSM) String() string {
 		log.Println("Failed to execute template:", err)
 	}
 
-	return buf.String()
+	return &buf
+}
+
+func (m *CFSM) Bytes() []byte {
+	return m.bytesBuffer().Bytes()
+}
+
+func (m *CFSM) String() string {
+	return m.bytesBuffer().String()
 }
 
 // State is a state.
@@ -191,7 +241,7 @@ func (s *Send) Label() string {
 	if s.state == nil {
 		log.Fatal("Cannot get Label for Send:", ErrStateUndef)
 	}
-	return fmt.Sprintf("%d ! %s", s.to.ID, s.msg)
+	return fmt.Sprintf("%s ! %s", s.to.Name, s.msg)
 }
 
 // State returns the State after transition.
@@ -221,7 +271,7 @@ func (r *Recv) Label() string {
 	if r.state == nil {
 		log.Fatal("Cannot get Label for Recv:", ErrStateUndef)
 	}
-	return fmt.Sprintf("%d ? %s", r.from.ID, r.msg)
+	return fmt.Sprintf("%s ? %s", r.from.Name, r.msg)
 }
 
 // State returns the State after transition.

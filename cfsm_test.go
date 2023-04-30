@@ -5,9 +5,18 @@ import "testing"
 // Tests creating new machine.
 func TestNewMachine(t *testing.T) {
 	sys := NewSystem()
-	m0 := sys.NewMachine()
-	m1 := sys.NewMachine()
-	m2 := sys.NewMachine()
+	m0, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to create machine 0.")
+	}
+	m1, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to create machine 1.")
+	}
+	m2, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to create machine 2.")
+	}
 	if m0.ID != 0 {
 		t.Errorf("Expected ID of machine 0 to be 0 (got %d).", m0.ID)
 	}
@@ -34,7 +43,10 @@ func TestNewMachine(t *testing.T) {
 // Tests creating new state.
 func TestNewState(t *testing.T) {
 	sys := NewSystem()
-	m := sys.NewMachine()
+	m, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	st4 := m.NewFreeState()
 	st0 := m.NewState()
 	st1 := m.NewState()
@@ -86,8 +98,14 @@ func TestNewState(t *testing.T) {
 // Tests transition.
 func TestTransitions(t *testing.T) {
 	sys := NewSystem()
-	m0 := sys.NewMachine()
-	m1 := sys.NewMachine()
+	m0, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
+	m1, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	m0st0 := m0.NewState()
 	m0st1 := m0.NewState()
 	m1st0 := m1.NewState()
@@ -125,11 +143,17 @@ func TestTransitions(t *testing.T) {
 // Test removing last machine
 func TestRemoveMachine(t *testing.T) {
 	sys := NewSystem()
-	m0 := sys.NewMachine()
+	m0, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	if m0.ID != 0 {
 		t.Errorf("Machine 0 should have ID 0")
 	}
-	m1 := sys.NewMachine()
+	m1, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	if m1.ID != 1 {
 		t.Errorf("Machine 1 should have ID 1")
 	}
@@ -148,7 +172,10 @@ func TestRemoveMachine(t *testing.T) {
 	m0.Start = m0st0
 	m1.Start = m1st0
 
-	m2 := sys.NewMachine()
+	m2, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	if m2.ID != 2 {
 		t.Errorf("Machine 2 should have ID 2")
 	}
@@ -164,15 +191,24 @@ func TestRemoveMachine(t *testing.T) {
 // Test removing machine in the middle
 func TestRemoveMachine2(t *testing.T) {
 	sys := NewSystem()
-	m0 := sys.NewMachine()
+	m0, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	if m0.ID != 0 {
 		t.Errorf("Machine 0 should have ID 0")
 	}
-	m1 := sys.NewMachine()
+	m1, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	if m1.ID != 1 {
 		t.Errorf("Machine 1 should have ID 1")
 	}
-	m2 := sys.NewMachine()
+	m2, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	if m2.ID != 2 {
 		t.Errorf("Machine 2 should have ID 2")
 	}
@@ -203,8 +239,14 @@ func TestRemoveMachine2(t *testing.T) {
 // Tests transition with loops.
 func TestTransitions2(t *testing.T) {
 	sys := NewSystem()
-	m0 := sys.NewMachine()
-	m1 := sys.NewMachine()
+	m0, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
+	m1, err := sys.NewMachine()
+	if err != nil {
+		t.Errorf("Failed to add new machine.")
+	}
 	m0st0 := m0.NewState()
 	m0st1 := m0.NewState()
 	m1st0 := m1.NewState()
@@ -254,10 +296,10 @@ func TestTransitions2(t *testing.T) {
 func ExampleSystem() {
 	// Create a new system of CFSMs.
 	sys := NewSystem()
-	alice := sys.NewMachine() // CFSM Alice
+	alice, _ := sys.NewMachine() // CFSM Alice
 	alice.Comment = "Alice"
 
-	bob := sys.NewMachine() // CFSM Bob
+	bob, _ := sys.NewMachine() // CFSM Bob
 	bob.Comment = "Bob"
 
 	a0 := alice.NewState()
