@@ -8,7 +8,7 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/nickng/cfsm/petrify"
+	"github.com/pmontepagano/cfsm/petrify"
 )
 
 const (

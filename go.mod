@@ -1,1 +1,3 @@
-module github.com/nickng/cfsm
+module github.com/pmontepagano/cfsm
+
+go 1.20
